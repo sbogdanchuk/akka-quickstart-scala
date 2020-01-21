@@ -8,11 +8,14 @@ object Device {
     Behaviors.setup(context => new Device(context, groupId, deviceId))
 
   sealed trait Command
+
   final case class ReadTemperature(requestId: Long, replyTo: ActorRef[RespondTemperature]) extends Command
   final case class RespondTemperature(requestId: Long, value: Option[Double])
 
   final case class RecordTemperature(requestId: Long, value: Double, replyTo: ActorRef[TemperatureRecorded]) extends Command
   final case class TemperatureRecorded(requestId: Long)
+
+  case object Passivate extends Command
 }
 
 class Device(context: ActorContext[Device.Command], groupId: String, deviceId: String)
@@ -33,6 +36,8 @@ class Device(context: ActorContext[Device.Command], groupId: String, deviceId: S
     case ReadTemperature(id, replyTo) =>
       replyTo ! RespondTemperature(id, lastTemperatureReading)
       this
+
+    case Passivate => Behaviors.stopped
   }
 
   override def onSignal: PartialFunction[Signal, Behavior[Command]] = {
